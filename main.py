@@ -49,6 +49,8 @@ class missile():
     def shoot(self):
         if event.type == pygame.MOUSEBUTTONDOWN:
             self.shootflag = True
+            #Can put below code in move() if you want bullet to follow arrow (Could include it in a sniper type gun)
+            self.mousepos = pygame.mouse.get_pos()
 
 #To get to move diagonally, have different velocities for x and y (Use graph eqn's to help, y=mx+c based on the angle you shooting at)
     #Always called with shoot()
@@ -57,25 +59,22 @@ class missile():
         
         if self.shootflag == True and self.y > 0:
             #Get mouse pos
-            self.mousepos = pygame.mouse.get_pos()
+            
 
-            #Calculate gradient from shooter to mouse (Use y=mx + c)
             try:
+                #Calculate gradient from shooter to mouse (Use y=mx + c)
                 self.gradient = (windowheight - self.mousepos[1])/((windowwidth/2) - self.mousepos[0])
+            
+                #Calculate y intercept
+                self.yintercept = self.mousepos[1] - (self.gradient*self.mousepos[0])
+                self.y -= self.vel
+
+                #Calculate new x-value
+                self.x  = ((self.y - self.yintercept)/self.gradient)  
+
             except ZeroDivisionError:
-                pass
-
-            #Calculate y intercept
-            self.yintercept = self.mousepos[1] - (self.gradient*self.mousepos[0])
-            self.y -= self.vel
-
-            #Calculate new x-value
-            try:
-                self.x  = ((self.y - self.yintercept)/self.gradient)   
-            except ZeroDivisionError:
-                pass
-                
-
+                pass 
+            
         else: 
             self.y = self.yorigin
             self.x = self.xorigin
@@ -126,13 +125,7 @@ class bird():
             if ((bullet.hitbox[0] + i >= self.hitbox[0]) and (bullet.hitbox[0] + i <= self.hitbox[0] + self.hitbox[2])) and ((bullet.hitbox[1] + i >= self.hitbox[1]) and (bullet.hitbox[1] + i <= self.hitbox[1] + self.hitbox[3])):
                 if self.hit == False:
                     player.score += 100
-                    self.hit = True
-
-                    
-
-
-         
-            
+                    self.hit = True          
 
 #Instantiate objects
 player = shooter()
@@ -149,7 +142,7 @@ def drawgamewindow():
     bullet.draw()
     pygame.display.update()
 
-pygame.mouse.set_visible(False) #/// Use for when we have the gun in the game, to remove mouse
+# pygame.mouse.set_visible(False) #/// Use for when we have the gun in the game, to remove mouse
 run = True
 #MAINLOOP
 while run:
