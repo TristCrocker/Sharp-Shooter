@@ -2,6 +2,7 @@ import pygame
 import math
 
 
+pygame.mixer.init()
 pygame.init()
 
 
@@ -11,15 +12,23 @@ windowheight = 600
 win = pygame.display.set_mode((windowwidth,windowheight))
 pygame.display.set_caption("Sharp Shooter")
 clock = pygame.time.Clock()
-gamefont = pygame.font.SysFont('Comic Sans', 50)
+gamefont = pygame.font.SysFont('Copperplate', 50)
 
 #Load images in
 mainbg = pygame.image.load('hillbackground.jpg')
 flyright = [pygame.image.load('birds/bird1.png'), pygame.image.load('birds/bird2.png'), pygame.image.load('birds/bird3.png')]
 bulletimg = pygame.image.load('bullet.png')
 
+
+
+#Load sounds in
+shotgunshot = pygame.mixer.Sound('shotgun-shot.mp3')
+
 #Set framerate
-framerate = 60
+framerate = 60  
+#Set color of start and quit buttons
+startcolor = (0,0,0)
+quitcolor = (0,0,0)
 
 class shooter():
     def __init__(self):
@@ -47,10 +56,13 @@ class missile():
         win.blit(bulletimg, (self.x, self.y))
 
     def shoot(self):
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        #Must include self.shootflag == False to ensure the gunshot sound only play once
+        if event.type == pygame.MOUSEBUTTONDOWN and self.shootflag == False:
             self.shootflag = True
             #Can put below code in move() if you want bullet to follow arrow (Could include it in a sniper type gun)
             self.mousepos = pygame.mouse.get_pos()
+            pygame.mixer.Sound.play(shotgunshot)
+           
 
 #To get to move diagonally, have different velocities for x and y (Use graph eqn's to help, y=mx+c based on the angle you shooting at)
     #Always called with shoot()
@@ -134,7 +146,6 @@ pigeon = bird(5, 50, 50)
 
 def drawgamewindow():
     win.blit(mainbg, (0,0))
-
     #Draw in score
     scoresurface = gamefont.render("Score: " + str(player.score), True, (0,0,0))
     win.blit(scoresurface,(10,10))
@@ -142,17 +153,72 @@ def drawgamewindow():
     bullet.draw()
     pygame.display.update()
 
+def drawstartwindow():
+    win.blit(mainbg, (0,0))
+    startsurface = gamefont.render("Start", True, startcolor)
+    quitsurface = gamefont.render("Quit", True, quitcolor)
+    win.blit(startsurface, (20,10))
+    win.blit(quitsurface, (20,50))
+    pygame.display.update()
+
+def playstartmusic():
+    #Load music in
+    pygame.mixer.music.load("startwindowmusic.mp3")
+    pygame.mixer.music.set_volume(0.7)
+    pygame.mixer.music.play(-1)
+playstartmusic()
+
+def playgamemusic():
+    global gamemusicflag
+    #Makes sure game music not restarted each loop
+    if gamemusicflag == False:
+        #Load music in
+        pygame.mixer.music.load("gamemusic.mp3")
+        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.play(-1)
+        gamemusicflag = True
+
 # pygame.mouse.set_visible(False) #/// Use for when we have the gun in the game, to remove mouse
 run = True
+startwindow = True
+gamemusicflag = False
 #MAINLOOP
 while run:
     clock.tick(framerate)
 
+    while startwindow and run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+        
+        drawstartwindow()
+        mousepos = pygame.mouse.get_pos()
+        #Change color of startbutton when hovering
+        if (mousepos[0] >= 20 and mousepos[0] <= 160) and (mousepos[1] >= 10 and mousepos[1] <= 50):
+            startcolor = (0,200,0)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                startwindow = False
+                pygame.mixer.music.pause()
+                pygame.time.delay(500)
+                
+        else:
+            startcolor = (0, 0, 0)
+
+        if (mousepos[0] >= 20 and mousepos[0] <= 140) and (mousepos[1] >= 55 and mousepos[1] <= 95):
+            quitcolor = (200,0,0)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pygame.quit()
+        else:
+            quitcolor = (0, 0, 0)
+
+    #Must be after start window so bullet doesnt shoot when pressing start
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
             pygame.quit()
-    
+
+    playgamemusic()
     bullet.shoot()
     bullet.move()
     pigeon.move()
